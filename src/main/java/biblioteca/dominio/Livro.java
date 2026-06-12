@@ -22,6 +22,10 @@ public class Livro {
         }
     }
 
+    public void registrarDevolucao() {
+        quantidadeDisponivel++;
+    }
+
     public String getTitulo() {
         return titulo;
     }

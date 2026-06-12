@@ -14,14 +14,24 @@ A aplicação será evoluída ao longo do desenvolvimento, passando por:
 
 ## Estado atual do projeto
 
-Este commit contém a estrutura inicial do projeto e a primeira entidade do domínio: `Livro`.
+Neste momento, o projeto contém a estrutura inicial da Etapa 1, com o domínio principal e os repositórios em memória.
 
-Também foram adicionadas as primeiras classes de apoio para iniciar a separação entre as camadas:
+Foram adicionadas as entidades principais do sistema:
 
-- `dominio`
-- `infraestrutura`
-- `aplicacao`
-- `apresentacao`
+- `Livro`
+- `Usuario`
+- `Emprestimo`
+
+Também foram adicionados os enums de situação:
+
+- `SituacaoUsuario`
+- `SituacaoEmprestimo`
+
+E os repositórios em memória:
+
+- `LivroRepositorio`
+- `UsuarioRepositorio`
+- `EmprestimoRepositorio`
 
 ## Estrutura atual
 
@@ -32,19 +42,30 @@ src/
       biblioteca/
         dominio/
           Livro.java
+          Usuario.java
+          Emprestimo.java
+          SituacaoUsuario.java
+          SituacaoEmprestimo.java
+
         infraestrutura/
           LivroRepositorio.java
+          UsuarioRepositorio.java
+          EmprestimoRepositorio.java
+
         aplicacao/
           LivroServico.java
+
         apresentacao/
           Main.java
 ```
 
-## Entidade Livro
+## Entidades do domínio
 
-A classe `Livro` representa um livro do acervo da biblioteca.
+### Livro
 
-Ela possui os seguintes atributos:
+Representa um livro do acervo da biblioteca.
+
+Atributos principais:
 
 - `id`
 - `titulo`
@@ -52,46 +73,103 @@ Ela possui os seguintes atributos:
 - `isbn`
 - `quantidadeDisponivel`
 
-Também possui uma regra de negócio inicial no método `realizarEmprestimo()`, responsável por verificar se existe quantidade disponível antes de diminuir o estoque.
+A classe também possui regras relacionadas ao estoque, como realizar empréstimo e registrar devolução.
+
+### Usuario
+
+Representa um usuário da biblioteca.
+
+Atributos principais:
+
+- `id`
+- `nome`
+- `email`
+- `situacao`
+
+A situação do usuário pode ser:
+
+- `ATIVO`
+- `SUSPENSO`
+
+### Emprestimo
+
+Representa um empréstimo de livro para um usuário.
+
+Atributos principais:
+
+- `id`
+- `livro`
+- `usuario`
+- `dataRetirada`
+- `dataPrevistaDevolucao`
+- `situacao`
+
+A situação do empréstimo pode ser:
+
+- `ATIVO`
+- `DEVOLVIDO`
+- `ATRASADO`
+
+## Repositórios em memória
+
+Os repositórios armazenam os dados temporariamente em memória usando `HashMap`.
+
+Cada repositório possui os métodos principais:
+
+- `salvar`
+- `buscarPorId`
+- `listarTodos`
+- `remover`
+
+Os métodos `buscarPorId` retornam `Optional`, para representar de forma mais segura a possibilidade de um registro não ser encontrado.
 
 ## Separação de responsabilidades
 
 Neste momento, o projeto está organizado da seguinte forma:
 
-- `dominio`: contém a entidade principal e suas regras de negócio.
-- `infraestrutura`: contém o repositório em memória usado para armazenar livros.
-- `aplicacao`: contém o serviço responsável por coordenar operações relacionadas a livros.
-- `apresentacao`: contém a classe `Main`, ponto inicial de execução do sistema.
+- `dominio`: contém as entidades e regras básicas de negócio.
+- `infraestrutura`: contém os repositórios em memória.
+- `aplicacao`: contém serviços responsáveis por coordenar operações do sistema.
+- `apresentacao`: contém a classe `Main`, ponto inicial de execução.
 
 ## Observação sobre o domínio
 
 As classes da camada de domínio não devem depender das camadas de infraestrutura, aplicação ou apresentação.
 
-Neste commit, a classe `Livro` não importa nenhuma classe dessas camadas, mantendo o domínio independente.
+Neste projeto, as classes dentro de `biblioteca.dominio` não importam classes de `biblioteca.infraestrutura` nem de `biblioteca.aplicacao`, mantendo o domínio independente.
 
-## Como compilar e executar pelo terminal
+## Como executar
 
-Na raiz do projeto, onde ficam o `README.md` e a pasta `src`, execute:
+Abra o projeto em uma IDE Java, como VS Code, IntelliJ IDEA ou Eclipse.
 
-```bash
-javac -d out src/main/java/biblioteca/apresentacao/Main.java
-java -cp out biblioteca.apresentacao.Main
+Execute a classe principal:
+
+```text
+src/main/java/biblioteca/apresentacao/Main.java
 ```
 
-Neste primeiro commit, o `Main.java` ainda é simples e serve apenas para testar se o projeto está executando corretamente.
+A classe `Main` é o ponto de entrada do sistema.
 
-## Observação
+## Estado da implementação
 
-Em etapas futuras, quando o projeto tiver mais classes sendo usadas diretamente pelo `Main`, pode ser necessário compilar todos os arquivos Java do projeto.
+Este commit ainda não finaliza toda a Etapa 1.
+
+A parte atual cobre:
+
+- entidades principais do domínio;
+- enums de situação;
+- repositórios em memória.
+
+Ainda falta implementar nos próximos commits:
+
+- `UsuarioServico`
+- `EmprestimoServico`
+- fluxo completo no `Main`
+- cadastro de livro
+- cadastro de usuário
+- realização de empréstimo
+- registro de devolução
 
 ## Próximos passos
 
-Os próximos commits devem adicionar:
-
-- `Usuario`
-- `Emprestimo`
-- `SituacaoUsuario`
-- `SituacaoEmprestimo`
-- repositórios restantes
-- serviços de aplicação
-- fluxo completo de empréstimo e devolução
+Os próximos commits devem completar a camada de aplicação e a demonstração no console, finalizando a Etapa 1 da atividade.
