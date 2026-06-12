@@ -14,24 +14,15 @@ A aplicação será evoluída ao longo do desenvolvimento, passando por:
 
 ## Estado atual do projeto
 
-Neste momento, o projeto contém a estrutura inicial da Etapa 1, com o domínio principal e os repositórios em memória.
+Neste momento, o projeto conclui a primeira versão da Etapa 1, usando Arquitetura em Camadas.
 
-Foram adicionadas as entidades principais do sistema:
+A aplicação já possui:
 
-- `Livro`
-- `Usuario`
-- `Emprestimo`
-
-Também foram adicionados os enums de situação:
-
-- `SituacaoUsuario`
-- `SituacaoEmprestimo`
-
-E os repositórios em memória:
-
-- `LivroRepositorio`
-- `UsuarioRepositorio`
-- `EmprestimoRepositorio`
+- entidades principais do domínio;
+- enums de situação;
+- repositórios em memória;
+- serviços da camada de aplicação;
+- classe `Main` demonstrando um fluxo básico no console.
 
 ## Estrutura atual
 
@@ -54,83 +45,31 @@ src/
 
         aplicacao/
           LivroServico.java
+          UsuarioServico.java
+          EmprestimoServico.java
 
         apresentacao/
           Main.java
 ```
 
-## Entidades do domínio
+## Funcionalidades demonstradas
 
-### Livro
+A classe `Main` executa um fluxo simples com:
 
-Representa um livro do acervo da biblioteca.
-
-Atributos principais:
-
-- `id`
-- `titulo`
-- `autor`
-- `isbn`
-- `quantidadeDisponivel`
-
-A classe também possui regras relacionadas ao estoque, como realizar empréstimo e registrar devolução.
-
-### Usuario
-
-Representa um usuário da biblioteca.
-
-Atributos principais:
-
-- `id`
-- `nome`
-- `email`
-- `situacao`
-
-A situação do usuário pode ser:
-
-- `ATIVO`
-- `SUSPENSO`
-
-### Emprestimo
-
-Representa um empréstimo de livro para um usuário.
-
-Atributos principais:
-
-- `id`
-- `livro`
-- `usuario`
-- `dataRetirada`
-- `dataPrevistaDevolucao`
-- `situacao`
-
-A situação do empréstimo pode ser:
-
-- `ATIVO`
-- `DEVOLVIDO`
-- `ATRASADO`
-
-## Repositórios em memória
-
-Os repositórios armazenam os dados temporariamente em memória usando `HashMap`.
-
-Cada repositório possui os métodos principais:
-
-- `salvar`
-- `buscarPorId`
-- `listarTodos`
-- `remover`
-
-Os métodos `buscarPorId` retornam `Optional`, para representar de forma mais segura a possibilidade de um registro não ser encontrado.
+1. cadastro de livro;
+2. cadastro de usuário;
+3. realização de empréstimo;
+4. listagem de empréstimos ativos;
+5. registro de devolução.
 
 ## Separação de responsabilidades
 
-Neste momento, o projeto está organizado da seguinte forma:
+O projeto está organizado da seguinte forma:
 
 - `dominio`: contém as entidades e regras básicas de negócio.
 - `infraestrutura`: contém os repositórios em memória.
-- `aplicacao`: contém serviços responsáveis por coordenar operações do sistema.
-- `apresentacao`: contém a classe `Main`, ponto inicial de execução.
+- `aplicacao`: contém os serviços responsáveis pelos casos de uso.
+- `apresentacao`: contém a classe `Main`, usada para demonstrar o funcionamento no console.
 
 ## Observação sobre o domínio
 
@@ -150,26 +89,6 @@ src/main/java/biblioteca/apresentacao/Main.java
 
 A classe `Main` é o ponto de entrada do sistema.
 
-## Estado da implementação
-
-Este commit ainda não finaliza toda a Etapa 1.
-
-A parte atual cobre:
-
-- entidades principais do domínio;
-- enums de situação;
-- repositórios em memória.
-
-Ainda falta implementar nos próximos commits:
-
-- `UsuarioServico`
-- `EmprestimoServico`
-- fluxo completo no `Main`
-- cadastro de livro
-- cadastro de usuário
-- realização de empréstimo
-- registro de devolução
-
 ## Próximos passos
 
-Os próximos commits devem completar a camada de aplicação e a demonstração no console, finalizando a Etapa 1 da atividade.
+Os próximos commits devem evoluir o projeto para a Arquitetura Hexagonal, criando portas e adaptadores para desacoplar os serviços da infraestrutura.

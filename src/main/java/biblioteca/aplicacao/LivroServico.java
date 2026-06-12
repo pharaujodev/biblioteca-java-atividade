@@ -18,7 +18,8 @@ public class LivroServico {
     }
 
     public Livro buscarLivroPorId(Long id) {
-        return livroRepositorio.buscarPorId(id).orElse(null);
+        return livroRepositorio.buscarPorId(id)
+                .orElseThrow(() -> new IllegalArgumentException("Livro não encontrado."));
     }
 
     public List<Livro> listarTodosLivros() {
