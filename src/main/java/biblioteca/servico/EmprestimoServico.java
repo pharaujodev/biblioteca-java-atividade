@@ -1,31 +1,37 @@
-package biblioteca.aplicacao;
+package biblioteca.servico;
 
 import biblioteca.dominio.Emprestimo;
 import biblioteca.dominio.Livro;
 import biblioteca.dominio.SituacaoEmprestimo;
 import biblioteca.dominio.Usuario;
-import biblioteca.infraestrutura.EmprestimoRepositorio;
-import biblioteca.infraestrutura.LivroRepositorio;
-import biblioteca.infraestrutura.UsuarioRepositorio;
+import biblioteca.porta.entrada.PortaEmprestimo;
+import biblioteca.porta.saida.PortaEmprestimoRepositorio;
+import biblioteca.porta.saida.PortaLivroRepositorio;
+import biblioteca.porta.saida.PortaNotificacao;
+import biblioteca.porta.saida.PortaUsuarioRepositorio;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EmprestimoServico {
+public class EmprestimoServico implements PortaEmprestimo {
 
-    private EmprestimoRepositorio emprestimoRepositorio;
-    private LivroRepositorio livroRepositorio;
-    private UsuarioRepositorio usuarioRepositorio;
+    private PortaEmprestimoRepositorio emprestimoRepositorio;
+    private PortaLivroRepositorio livroRepositorio;
+    private PortaUsuarioRepositorio usuarioRepositorio;
+    private PortaNotificacao notificacao;
 
-    public EmprestimoServico(EmprestimoRepositorio emprestimoRepositorio,
-                             LivroRepositorio livroRepositorio,
-                             UsuarioRepositorio usuarioRepositorio) {
+    public EmprestimoServico(PortaEmprestimoRepositorio emprestimoRepositorio,
+                             PortaLivroRepositorio livroRepositorio,
+                             PortaUsuarioRepositorio usuarioRepositorio,
+                             PortaNotificacao notificacao) {
         this.emprestimoRepositorio = emprestimoRepositorio;
         this.livroRepositorio = livroRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
+        this.notificacao = notificacao;
     }
 
+    @Override
     public Emprestimo realizarEmprestimo(Long usuarioId, Long livroId) {
         Usuario usuario = usuarioRepositorio.buscarPorId(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
@@ -57,6 +63,7 @@ public class EmprestimoServico {
         return emprestimo;
     }
 
+    @Override
     public void registrarDevolucao(Long emprestimoId) {
         Emprestimo emprestimo = emprestimoRepositorio.buscarPorId(emprestimoId)
                 .orElseThrow(() -> new IllegalArgumentException("Empréstimo não encontrado."));
@@ -67,6 +74,7 @@ public class EmprestimoServico {
         emprestimoRepositorio.salvar(emprestimo);
     }
 
+    @Override
     public List<Emprestimo> listarEmprestimosAtivos() {
         List<Emprestimo> ativos = new ArrayList<>();
 
@@ -79,6 +87,7 @@ public class EmprestimoServico {
         return ativos;
     }
 
+    @Override
     public List<Emprestimo> verificarAtrasos() {
         List<Emprestimo> atrasados = new ArrayList<>();
         LocalDate dataAtual = LocalDate.now();
@@ -87,6 +96,7 @@ public class EmprestimoServico {
             if (emprestimo.estaAtrasado(dataAtual)) {
                 emprestimo.marcarComoAtrasado();
                 emprestimoRepositorio.salvar(emprestimo);
+                notificacao.notificarAtraso(emprestimo.getUsuario(), emprestimo);
                 atrasados.add(emprestimo);
             }
         }
