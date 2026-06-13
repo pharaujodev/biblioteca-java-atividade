@@ -4,11 +4,16 @@ import biblioteca.dominio.Emprestimo;
 import biblioteca.dominio.Livro;
 import biblioteca.dominio.SituacaoUsuario;
 import biblioteca.dominio.Usuario;
+import biblioteca.dominio.evento.DevolucaoRegistradaEvento;
+import biblioteca.dominio.evento.EmprestimoRealizadoEvento;
 import biblioteca.infraestrutura.adaptador.EmprestimoRepositorioMemoria;
 import biblioteca.infraestrutura.adaptador.LivroRepositorioCsv;
 import biblioteca.infraestrutura.adaptador.LivroRepositorioMemoria;
 import biblioteca.infraestrutura.adaptador.NotificacaoConsole;
+import biblioteca.infraestrutura.adaptador.ServicoDeLog;
+import biblioteca.infraestrutura.adaptador.ServicoDeNotificacao;
 import biblioteca.infraestrutura.adaptador.UsuarioRepositorioMemoria;
+import biblioteca.evento.EventBus;
 import biblioteca.porta.entrada.PortaEmprestimo;
 import biblioteca.porta.saida.PortaEmprestimoRepositorio;
 import biblioteca.porta.saida.PortaLivroRepositorio;
@@ -19,15 +24,26 @@ import biblioteca.servico.EmprestimoServico;
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Demonstração com adaptador em memória");
-        executarFluxoComMemoria();
+        EventBus<EmprestimoRealizadoEvento> eventosEmprestimo = new EventBus<>();
+        EventBus<DevolucaoRegistradaEvento> eventosDevolucao = new EventBus<>();
+
+        ServicoDeNotificacao servicoDeNotificacao = new ServicoDeNotificacao();
+        ServicoDeLog servicoDeLog = new ServicoDeLog();
+
+        eventosEmprestimo.assinar(servicoDeNotificacao::notificarEmprestimoRealizado);
+        eventosEmprestimo.assinar(servicoDeLog::registrarEmprestimo);
+        eventosDevolucao.assinar(servicoDeLog::registrarDevolucao);
+
+        System.out.println("Demonstração com eventos e adaptador em memória");
+        executarFluxoComMemoria(eventosEmprestimo, eventosDevolucao);
 
         System.out.println();
-        System.out.println("Demonstração com adaptador CSV para livros");
-        executarFluxoComCsv();
+        System.out.println("Demonstração com eventos e adaptador CSV para livros");
+        executarFluxoComCsv(eventosEmprestimo, eventosDevolucao);
     }
 
-    private static void executarFluxoComMemoria() {
+    private static void executarFluxoComMemoria(EventBus<EmprestimoRealizadoEvento> eventosEmprestimo,
+                                                EventBus<DevolucaoRegistradaEvento> eventosDevolucao) {
         PortaLivroRepositorio livroRepositorio = new LivroRepositorioMemoria();
         PortaUsuarioRepositorio usuarioRepositorio = new UsuarioRepositorioMemoria();
         PortaEmprestimoRepositorio emprestimoRepositorio = new EmprestimoRepositorioMemoria();
@@ -37,13 +53,16 @@ public class Main {
                 emprestimoRepositorio,
                 livroRepositorio,
                 usuarioRepositorio,
-                notificacao
+                notificacao,
+                eventosEmprestimo,
+                eventosDevolucao
         );
 
         executarFluxo(livroRepositorio, usuarioRepositorio, emprestimoServico, 1L);
     }
 
-    private static void executarFluxoComCsv() {
+    private static void executarFluxoComCsv(EventBus<EmprestimoRealizadoEvento> eventosEmprestimo,
+                                            EventBus<DevolucaoRegistradaEvento> eventosDevolucao) {
         PortaLivroRepositorio livroRepositorio = new LivroRepositorioCsv("livros.csv");
         PortaUsuarioRepositorio usuarioRepositorio = new UsuarioRepositorioMemoria();
         PortaEmprestimoRepositorio emprestimoRepositorio = new EmprestimoRepositorioMemoria();
@@ -53,7 +72,9 @@ public class Main {
                 emprestimoRepositorio,
                 livroRepositorio,
                 usuarioRepositorio,
-                notificacao
+                notificacao,
+                eventosEmprestimo,
+                eventosDevolucao
         );
 
         executarFluxo(livroRepositorio, usuarioRepositorio, emprestimoServico, 2L);
@@ -75,12 +96,10 @@ public class Main {
         Emprestimo emprestimo = emprestimoServico.realizarEmprestimo(usuario.getId(), livro.getId());
 
         System.out.println("Empréstimo realizado com ID: " + emprestimo.getId());
-        System.out.println("Quantidade disponível após empréstimo: " + livro.getQuantidadeDisponivel());
         System.out.println("Empréstimos ativos: " + emprestimoServico.listarEmprestimosAtivos().size());
 
         emprestimoServico.registrarDevolucao(emprestimo.getId());
 
         System.out.println("Devolução registrada.");
-        System.out.println("Quantidade disponível após devolução: " + livro.getQuantidadeDisponivel());
     }
 }

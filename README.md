@@ -14,19 +14,9 @@ A aplicação está sendo desenvolvida de forma incremental, passando por:
 
 ## Estado atual do projeto
 
-Nesta etapa, o projeto foi refatorado para utilizar **Arquitetura Hexagonal**, também conhecida como **Ports and Adapters**.
+Nesta etapa, o projeto foi estendido com comunicação por eventos usando o padrão Publisher/Subscriber.
 
-A principal mudança foi fazer o serviço de empréstimos depender de interfaces, e não diretamente de classes concretas da infraestrutura. Com isso, é possível trocar a forma de armazenamento sem alterar a lógica principal do sistema.
-
-Atualmente o projeto possui:
-
-- entidades principais do domínio;
-- portas de entrada e saída;
-- serviço de empréstimos usando interfaces;
-- adaptadores em memória;
-- adaptador CSV para livros;
-- adaptador de notificação por console;
-- demonstração de troca de adaptador na classe `Main`.
+Agora o `EmprestimoServico` publica eventos quando um empréstimo é realizado e quando uma devolução é registrada. Os consumidores desses eventos são registrados no `Main`, sem chamada direta dentro do serviço.
 
 ## Estrutura atual
 
@@ -41,11 +31,13 @@ src/
           Emprestimo.java
           SituacaoUsuario.java
           SituacaoEmprestimo.java
+          evento/
+            EmprestimoRealizadoEvento.java
+            DevolucaoRegistradaEvento.java
 
         porta/
           entrada/
             PortaEmprestimo.java
-
           saida/
             PortaLivroRepositorio.java
             PortaUsuarioRepositorio.java
@@ -55,6 +47,9 @@ src/
         servico/
           EmprestimoServico.java
 
+        evento/
+          EventBus.java
+
         infraestrutura/
           adaptador/
             LivroRepositorioMemoria.java
@@ -62,126 +57,43 @@ src/
             UsuarioRepositorioMemoria.java
             EmprestimoRepositorioMemoria.java
             NotificacaoConsole.java
+            ServicoDeNotificacao.java
+            ServicoDeLog.java
+
 
         apresentacao/
           Main.java
 ```
 
-## Domínio
+## Eventos
 
-O pacote `dominio` contém as entidades principais do sistema:
+Foram criados dois eventos no pacote `dominio/evento`:
 
-- `Livro`
-- `Usuario`
-- `Emprestimo`
+- `EmprestimoRealizadoEvento`
+- `DevolucaoRegistradaEvento`
 
-Também contém os enums:
+Esses eventos carregam os dados básicos da operação realizada.
 
-- `SituacaoUsuario`
-- `SituacaoEmprestimo`
+## EventBus
 
-As regras básicas continuam nas entidades. Por exemplo, a classe `Livro` possui o método `realizarEmprestimo()`, que verifica a disponibilidade antes de diminuir a quantidade em estoque.
+O `EventBus<T>` fica no pacote `biblioteca.evento` e é genérico e permite:
 
-## Portas
+- assinar consumidores;
+- publicar eventos;
+- acionar todos os consumidores cadastrados.
 
-As portas representam contratos usados pelo sistema.
+## Consumidores
 
-### Porta de entrada
+Foram criados dois consumidores principais:
 
-A porta de entrada define os casos de uso de empréstimo:
+- `ServicoDeNotificacao`: consome `EmprestimoRealizadoEvento` e exibe uma notificação no console.
+- `ServicoDeLog`: consome `EmprestimoRealizadoEvento` e `DevolucaoRegistradaEvento`, registrando as operações em `biblioteca.log` com timestamp.
 
-- `realizarEmprestimo`
-- `registrarDevolucao`
-- `listarEmprestimosAtivos`
-- `verificarAtrasos`
+## Desacoplamento
 
-Arquivo:
+O `EmprestimoServico` não importa `ServicoDeNotificacao` nem `ServicoDeLog`.
 
-```text
-porta/entrada/PortaEmprestimo.java
-```
-
-### Portas de saída
-
-As portas de saída representam dependências externas usadas pelo serviço:
-
-- `PortaLivroRepositorio`
-- `PortaUsuarioRepositorio`
-- `PortaEmprestimoRepositorio`
-- `PortaNotificacao`
-
-Essas interfaces permitem que o serviço use repositórios e notificação sem conhecer diretamente suas implementações.
-
-## Serviço
-
-O `EmprestimoServico` implementa a interface `PortaEmprestimo`.
-
-Ele depende das portas de saída, e não dos adaptadores concretos. Isso deixa a lógica de empréstimo desacoplada da infraestrutura.
-
-Exemplo da ideia usada:
-
-```java
-PortaLivroRepositorio livroRepositorio;
-PortaUsuarioRepositorio usuarioRepositorio;
-PortaEmprestimoRepositorio emprestimoRepositorio;
-PortaNotificacao notificacao;
-```
-
-## Adaptadores
-
-Os adaptadores ficam no pacote `infraestrutura/adaptador`.
-
-Foram implementados:
-
-- `LivroRepositorioMemoria`
-- `UsuarioRepositorioMemoria`
-- `EmprestimoRepositorioMemoria`
-- `LivroRepositorioCsv`
-- `NotificacaoConsole`
-
-Os repositórios em memória usam `HashMap`.
-
-O `LivroRepositorioCsv` persiste os livros em um arquivo `livros.csv`, usando recursos da biblioteca padrão do Java.
-
-## Troca de adaptador
-
-A classe `Main` demonstra a troca de adaptador.
-
-Primeiro, o fluxo é executado com o repositório de livros em memória:
-
-```java
-PortaLivroRepositorio livroRepositorio = new LivroRepositorioMemoria();
-```
-
-Depois, o mesmo fluxo é executado usando o repositório CSV:
-
-```java
-PortaLivroRepositorio livroRepositorio = new LivroRepositorioCsv("livros.csv");
-```
-
-A lógica do `EmprestimoServico` não precisa ser alterada para essa troca funcionar, pois ele trabalha com a interface `PortaLivroRepositorio`.
-
-## Separação de responsabilidades
-
-O projeto está organizado da seguinte forma:
-
-- `dominio`: entidades e regras básicas de negócio;
-- `porta`: interfaces de entrada e saída;
-- `servico`: implementação dos casos de uso;
-- `infraestrutura`: adaptadores concretos;
-- `apresentacao`: classe `Main`, responsável por montar e executar a demonstração.
-
-## Observação sobre o domínio
-
-As classes do pacote `biblioteca.dominio` não devem importar classes de infraestrutura, aplicação ou apresentação.
-
-Nesta versão, o domínio não importa classes de:
-
-- `biblioteca.infraestrutura`
-- `biblioteca.apresentacao`
-- `biblioteca.servico`
-
-Isso mantém o domínio independente dos detalhes externos.
+A relação entre publicador e consumidores acontece no `Main`, por meio do `EventBus`.
 
 ## Como executar
 
@@ -193,22 +105,14 @@ Execute a classe principal:
 src/main/java/biblioteca/apresentacao/Main.java
 ```
 
-A classe `Main` executa uma demonstração com:
+Ao executar, o sistema demonstra:
 
 1. cadastro de livro;
 2. cadastro de usuário;
 3. realização de empréstimo;
-4. devolução;
-5. troca de adaptador entre memória e CSV.
-
-## Decisões de design
-
-A principal decisão desta etapa foi usar interfaces para representar as dependências do serviço.
-
-Com isso, o `EmprestimoServico` não precisa saber se os dados vêm de um `HashMap`, de um arquivo CSV ou de outra fonte. Ele apenas chama os métodos definidos pelas portas.
-
-Essa organização facilita a troca de adaptadores e deixa o código mais próximo da Arquitetura Hexagonal.
-
-## Próximos passos
-
-A próxima etapa será adicionar comunicação por eventos, usando um `EventBus` genérico e consumidores independentes para notificação e log.
+4. publicação de evento de empréstimo;
+5. notificação automática;
+6. registro de log;
+7. devolução;
+8. publicação de evento de devolução;
+9. registro de log da devolução.
