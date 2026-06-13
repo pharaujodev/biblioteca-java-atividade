@@ -116,3 +116,9 @@ Ao executar, o sistema demonstra:
 7. devolução;
 8. publicação de evento de devolução;
 9. registro de log da devolução.
+
+## Dificuldades encontradas
+
+Uma dificuldade foi entender como separar as responsabilidades na Arquitetura Hexagonal, principalmente para que o serviço dependesse apenas de interfaces e não de classes concretas da infraestrutura.
+
+Outra dificuldade foi integrar os eventos sem criar dependência direta entre o serviço de empréstimos e os consumidores. Para resolver isso, foi criado um EventBus genérico, e os consumidores passaram a ser registrados na classe Main.
